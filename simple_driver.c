@@ -16,7 +16,6 @@ int main()
 	char *book_repo_name = "book";
 	char *issue_repo_name= "issue";
 
-	
 
 	int status;
 	struct Book testContact;
@@ -33,8 +32,8 @@ int main()
 		exit(status);
 	}
 	testContact.isbn = 10000;
-	strcpy(testContact.title, "dummy name");
-	strcpy(testContact.author, "dummy author");
+	strcpy(testContact.title, "Yogi");
+	strcpy(testContact.author, "yoganand");
 
 	test_case_id = "02";
 	status = libsys_open(book_repo_name,stud_repo_name,issue_repo_name);
@@ -64,8 +63,8 @@ int main()
 
 	test_case_id = "05";
 	if( testContact.isbn == 10000  && 
-		strcmp(testContact.title,"dummy name") == 0 &&
-		strcmp(testContact.author,"dummy author") == 0 )
+		strcmp(testContact.title,"Yogi") == 0 &&
+		strcmp(testContact.author,"yoganand") == 0 )
 	{
 
 		TREPORT(test_case_id,"SUCCESS")
@@ -84,8 +83,8 @@ int main()
 
 	test_case_id = "07";
 	if( testContact.isbn == 10000  && 
-		strcmp(testContact.title,"dummy name") == 0 &&
-		strcmp(testContact.author,"dummy author") == 0 )
+		strcmp(testContact.title,"Yogi") == 0 &&
+		strcmp(testContact.author,"yoganand") == 0 )
 
 		TREPORT(test_case_id,"SUCCESS")
 	else
@@ -97,12 +96,12 @@ int main()
 	
 
 	testStudent.rollno = 10000;
-	strcpy(testStudent.name, "dummy name");
-	strcpy(testStudent.address, "dummy address");
+	strcpy(testStudent.name, "ABC");
+	strcpy(testStudent.address, "Bangalore");
 
 
 
-	test_case_id = "8";
+	test_case_id = "08";
 	testStudent.rollno = 10000;
 	status = put_student_by_rollno(testStudent.rollno, &testStudent );
 	if( status == BOOK_SUCCESS )
@@ -111,7 +110,7 @@ int main()
 		TREPORT(test_case_id,"FAIL")
 
 
-	test_case_id = "9";
+	test_case_id = "09";
 	status = get_student_by_rollno( 10000, &testStudent );
 	if( status == BOOK_SUCCESS )
 		TREPORT(test_case_id,"SUCCESS")
@@ -120,8 +119,8 @@ int main()
 
 	test_case_id = "10";
 	if( testStudent.rollno == 10000  && 
-		strcmp(testStudent.name,"dummy name") == 0 &&
-		strcmp(testStudent.address,"dummy address") == 0 )
+		strcmp(testStudent.name,"ABC") == 0 &&
+		strcmp(testStudent.address,"Bangalore") == 0 )
 	{
 
 		TREPORT(test_case_id,"SUCCESS")
@@ -140,14 +139,13 @@ int main()
 
 	test_case_id = "12";
 	if( testStudent.rollno == 10000  && 
-		strcmp(testStudent.name,"dummy name") == 0 &&
-		strcmp(testStudent.address,"dummy address") == 0 )
+		strcmp(testStudent.name,"ABC") == 0 &&
+		strcmp(testStudent.address,"Bangalore") == 0 )
 
 		TREPORT(test_case_id,"SUCCESS")
 	else
 		TREPORT(test_case_id,"FAIL")
 
-	
 	test_case_id = "13";
 	status = issue( 10000, 10000 );
 	if( status==LIB_SUCCESS )
@@ -156,17 +154,31 @@ int main()
 	else
 		TREPORT(test_case_id,"FAIL")
 
-
+	
 	test_case_id = "14";
-	status = issue( 10080, 10050 );
-	if( status==LIB_REC_NOT_FOUND )
+	status = get_student_by_name( "ABC", &testStudent );
+	if( status == BOOK_SUCCESS )
 		TREPORT(test_case_id,"SUCCESS")
 	else
 		TREPORT(test_case_id,"FAIL")
 
-	
-
 	test_case_id = "15";
+	status = get_book_by_title( "Yogi", &testContact );
+	if( status == BOOK_SUCCESS )
+		TREPORT(test_case_id,"SUCCESS")
+	else
+		TREPORT(test_case_id,"FAIL")
+
+	test_case_id = "16";
+	status = issue( 10080, 10050 );
+	if( status==LIB_REC_NOT_FOUND )
+
+		TREPORT(test_case_id,"SUCCESS")
+	else
+		TREPORT(test_case_id,"FAIL")
+
+
+	test_case_id = "17";
 	status = libsys_close();
 	if( status == LIB_SUCCESS ){
 		TREPORT(test_case_id,"SUCCESS")
