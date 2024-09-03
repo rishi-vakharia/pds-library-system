@@ -4,125 +4,179 @@
 #include<stdlib.h>
 #include"libsys.h"
 
-// Define the global variable of libsys
-//Info. of data file(repo) is encapsulated in this struct
-struct LibsysInfo repo_handle;		
+//repo means library here
 
-//Function to create the file where data will be stored
+// Define the global variable of libsys
+struct LibsysInfo repo_handle;
+
+// Open the data file and index file in "wb" mode
+// Initialize index file by store "0" to indicate there are zero entries in index file
+
 int libsys_create( char *repo_name)
 {
-	FILE* fptr=fopen(repo_name,"wb");
-	if(fptr==NULL)
-		return LIB_FILE_ERROR;
-	fclose(fptr);
-	return LIB_SUCCESS;
+    char dfname[30];            char ifname[30];
+    strcpy(dfname, repo_name);  strcpy(ifname, repo_name);
+    strcat(dfname, ".dat");     strcat(ifname, ".ndx");
 
-	//1. create file pointer to open a file in 'wb' mode
-	//2. handle file pointer error if value is NULL return appropriate error code referring to the error codes in libsys.h
-	//3. close file pointer
-	//4. return libsys_success 
-}
-
-//Function to open the data file(repo) and set values of repo_handle struct
-int libsys_open( char *repo_name )
-{
-	repo_handle.libsys_data_fp=fopen(repo_name, "rb+");
-	if(repo_handle.libsys_data_fp==NULL)
-		return LIB_FILE_ERROR;
-
-	strcpy(repo_handle.libsys_name, repo_name);
-	repo_handle.repo_status=LIB_REPO_OPEN;
-
-	return LIB_SUCCESS;
-
-	//1. assign repo handle a file pointer by opening file in 'rb+' mode
-	//2. handle file pointer error if value is NULL return appropriate error code referring to the error codes in libsys.h
-	//3. assign values (repo_name) to libsys_repo_handle
-	//4. assign value to repo_handle.repo_status=LIB_REPO_OPEN;
-	//5. return libsys_success 
-
-}
-
-//Function to insert a book with a given isbn into the library
-int put_book_by_isbn( int isbn_to_write, struct Book *rec )
-{
-	if(repo_handle.repo_status==LIB_REPO_CLOSED)
-		return LIB_FILE_ERROR;
-	
-	//set the file pointer to end
-	fseek(repo_handle.libsys_data_fp, 0, SEEK_END);
-
-	//Check success of fwrite - fwrite returns the no. of elements successfully written
-	if(fwrite(&isbn_to_write, sizeof(int), 1, repo_handle.libsys_data_fp) != 1)
-		return LIB_ADD_FAILED;
-	if(fwrite(rec, sizeof(struct Book), 1, repo_handle.libsys_data_fp) != 1)
-		return LIB_ADD_FAILED;
-	
-	return LIB_SUCCESS;
-
-	//1. check if repo status is closed then return appropriate error code referring to the error codes in libsys.h
-	//2. else continue with following action sequence
-	//3. set the file pointer to end
-	//4. write isbn_to_write 
-	//5. write book record
-	//6. if both actions are successful then return libsys_success 
-	//7. else return libsys_add_failed
     
+    FILE* dat_fp=fopen(dfname, "wb");
+    if(dat_fp==NULL)
+        return LIB_FILE_ERROR;
+    
+    FILE* ndx_fp=fopen(ifname, "wb");
+    if(ndx_fp==NULL)
+        return LIB_FILE_ERROR;
+    
+
+    int entries=0;
+    if(fwrite(&entries, sizeof(int), 1, ndx_fp)!=1)
+        return LIB_FILE_ERROR;
+    
+    fclose(dat_fp);
+    fclose(ndx_fp);
+
+    return LIB_SUCCESS;
 }
 
-//Retrieve a book with given isbn from the library
-int get_book_by_isbn( int isbn_to_read, struct Book *rec )
+// Open the data file and index file in rb+ mode
+// Update the fields of LIB_RepoInfo appropriately
+// Read number of index entries from index file
+// Load index_entries array by reading index entries from the index file
+// Close only the index file
+int libsys_open( char *repo_name )
+{   
+    if(repo_handle.repo_status==LIB_REPO_OPEN)
+        return LIB_REPO_ALREADY_OPEN;
+
+
+    char dfname[30];            char ifname[30];
+    strcpy(dfname, repo_name);  strcpy(ifname, repo_name);
+    strcat(dfname, ".dat");     strcat(ifname, ".ndx");
+
+
+    FILE* ndx_fp=fopen(ifname, "rb+");
+    if(ndx_fp==NULL)
+        return LIB_FILE_ERROR;
+    
+    
+    strcpy(repo_handle.libsys_name, repo_name);         //initialising library
+    repo_handle.libsys_data_fp=fopen(dfname, "rb+");
+    if(repo_handle.libsys_data_fp==NULL)
+        return LIB_FILE_ERROR;
+    repo_handle.repo_status=LIB_REPO_OPEN;
+    if(fread(&repo_handle.index_count, sizeof(int), 1, ndx_fp)!=1)   
+        return LIB_FILE_ERROR;
+    if(fread(&repo_handle.index_entries, sizeof(struct LIB_NdxInfo), repo_handle.index_count, ndx_fp)!=repo_handle.index_count)
+        return LIB_FILE_ERROR;
+
+
+    fclose(ndx_fp);  
+
+    return LIB_SUCCESS;
+}
+
+// put_rec_by_key
+// Seek to the end of the data file
+// Create an index entry with the current data file location using ftell
+// Add index entry to array using offset returned by ftell
+// Write the key at the current data file location
+// Write the record after writing the key
+int put_book_by_isbn( int key, struct Book *rec )
 {
-	int isbn;
+    if(repo_handle.repo_status!=LIB_REPO_OPEN)
+        return LIB_REPO_NOT_OPEN;
 
-	if(repo_handle.repo_status==LIB_REPO_CLOSED)
+    int i;
+    for(i=0; i<repo_handle.index_count; i++){
+        if(repo_handle.index_entries[i].key==key)
+            return LIB_ADD_FAILED;                      //isbn or book is already present
+    }
+
+    fseek(repo_handle.libsys_data_fp, 0, SEEK_END);     
+    int location=ftell(repo_handle.libsys_data_fp);
+
+    if(fwrite(&key, sizeof(int), 1, repo_handle.libsys_data_fp) != 1)
 		return LIB_FILE_ERROR;
-	
-	//set the file pointer to start
-	fseek(repo_handle.libsys_data_fp, 0, SEEK_SET);
-	
-	fread(&isbn, sizeof(int), 1, repo_handle.libsys_data_fp);
 
-	//loop till eof is not reached - feof returns non-zero if eof is reached and 0 otherwise
-	while(feof(repo_handle.libsys_data_fp)==0){
-		if(isbn==isbn_to_read){
-			fread(rec, sizeof(struct Book), 1, repo_handle.libsys_data_fp);
-			return LIB_SUCCESS;
-		}
-		//skip the record	
-		fseek(repo_handle.libsys_data_fp, sizeof(struct Book), SEEK_CUR);
-		fread(&isbn, sizeof(int), 1, repo_handle.libsys_data_fp);
-	}
-	return LIB_REC_NOT_FOUND;
-	
-	//1. check if repo status is closed then return appropriate error code referring to the error codes in libsys.h
-	//2. else continue with following action sequence
-	//3. set the file pointer to start
-	//4.1 read isbn
-	//4.2 check if isbn is equal to the isbn_to_read
-	//4.3 if yes then read entire record of a book and return libsys_success
-	//4.4 else skip the record and read next isbn of the book
-	//5. Repeat step 4.1 to 4.4 till end of file
-	//6. Return record not found : appropriate error code referring to the error codes in libsys.h
+	if(fwrite(rec, sizeof(struct Book), 1, repo_handle.libsys_data_fp) != 1)    //add the book
+		return LIB_FILE_ERROR;
 
+
+    struct LIB_NdxInfo index={key, location};
+    repo_handle.index_entries[repo_handle.index_count++]=index;         //add index entry
+    
+	return LIB_SUCCESS;
 }
 
+// get_rec_by_key
+// Search for index entry in index_entries array
+// Seek to the file location based on offset in index entry
+// Read the key at the current file location 
+// Read the record after reading the key
+int get_book_by_isbn( int key, struct Book *rec )
+{
+    if(repo_handle.repo_status!=LIB_REPO_OPEN)
+        return LIB_REPO_NOT_OPEN;
+    
+    int i, location=-1;
+    for(i=0; i<repo_handle.index_count; i++){
+        if(repo_handle.index_entries[i].key==key){
+            location=repo_handle.index_entries[i].offset;
+            break;
+        } 
+    }
+    if(location == -1)
+        return LIB_REC_NOT_FOUND;
+    
+    fseek(repo_handle.libsys_data_fp, location, SEEK_SET);  
+    int isbn;
+    
+    if(fread(&isbn, sizeof(int), 1, repo_handle.libsys_data_fp)!=1)
+        return LIB_FILE_ERROR;
+    
+    if(isbn!=key)
+        return LIB_REC_NOT_FOUND;
+
+    if(fread(rec, sizeof(struct Book), 1, repo_handle.libsys_data_fp)!=1)
+        return LIB_FILE_ERROR;
+
+    return LIB_SUCCESS;
+}
+
+// libsys_close
+// Open the index file in wb mode (write mode, not append mode)
+// Write number of index entries at the beginning of index file
+// Unload the index array into the index file (overwrite the entire index file)
+// Close the index file and data file
 int libsys_close()
 {
-	if(repo_handle.repo_status==LIB_REPO_CLOSED)
-		return LIB_FILE_ERROR;
+    if(repo_handle.repo_status==LIB_REPO_CLOSED)
+        return LIB_REPO_NOT_OPEN;
 
-	fclose(repo_handle.libsys_data_fp);
-	strcpy(repo_handle.libsys_name, "");
-	repo_handle.repo_status=LIB_REPO_CLOSED;
 
-	return LIB_SUCCESS;
+    char ifname[30];
+    strcpy(ifname, repo_handle.libsys_name);
+    strcat(ifname, ".ndx");
 
-	//1. check if repo status is closed then  return appropriate error code referring to the error codes in libsys.h
-	//2. else continue with following action sequence
-	//3. close file pointer
-	//4. set libsys_name as "" 
-	//5. set repo_status=LIB_REPO_CLOSED
-    //6. return LIB_SUCCESS;
+    
+    FILE* ndx_fp=fopen(ifname, "wb");
+    if(ndx_fp==NULL)
+        return LIB_FILE_ERROR;
+
+
+    if(fwrite(&repo_handle.index_count, sizeof(int), 1, ndx_fp)!=1)         //deactivate the library
+        return LIB_NDX_SAVE_FAILED;
+    if(fwrite(&repo_handle.index_entries, sizeof(struct LIB_NdxInfo), repo_handle.index_count, ndx_fp)!=repo_handle.index_count)
+        return LIB_NDX_SAVE_FAILED;
+    strcpy(repo_handle.libsys_name, "");
+    repo_handle.index_count=0;
+    repo_handle.repo_status=LIB_REPO_CLOSED;
+    fclose(repo_handle.libsys_data_fp);     repo_handle.libsys_data_fp=NULL;
+
+
+    fclose(ndx_fp);
+
+    return LIB_SUCCESS;
+    
 }
 
