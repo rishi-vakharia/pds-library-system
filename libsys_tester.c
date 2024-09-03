@@ -140,6 +140,28 @@ void process_line( char *test_case )
 				TREPORT("PASS", "");
 		}
 	}
+
+else if( !strcmp(command,"DELETE") ){
+		if( !strcmp(param2,"0") )
+			expected_status = BOOK_SUCCESS;
+		else
+			expected_status = BOOK_FAILURE;
+
+		sscanf(param1, "%d", &isbn);
+		testBook.isbn = isbn;
+		status = delete_book_by_isbn( isbn );
+		if(status == LIB_SUCCESS)
+			status = BOOK_SUCCESS;
+		else
+			status = BOOK_FAILURE;
+		if( status == expected_status ){
+			TREPORT("PASS", "");
+		}
+		else{
+			sprintf(info,"delete_book_by_isbn returned status %d",status);
+			TREPORT("FAIL", info);
+		}
+	}
 	else if( !strcmp(command,"CLOSE") ){
 		if( !strcmp(param1,"0") )
 			expected_status = BOOK_SUCCESS;

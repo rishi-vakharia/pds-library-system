@@ -12,13 +12,15 @@
 #define BOOK_SUCCESS 0
 #define BOOK_FAILURE 1
 
+#define RECORD_DELETED 0
+#define RECORD_PRESENT 1
 
 // Repository status values
 #define LIB_REPO_OPEN 10
 #define LIB_REPO_CLOSED 11
 #define LIB_MAX_INDEX_ENTRIES 10000
 
-struct Book {
+struct Book{
 	int isbn;
 	char title[40];
 	char author[40];
@@ -28,6 +30,7 @@ struct Book {
 struct LIB_NdxInfo{
 	int key;
 	int offset;
+	int flag; 
 };
 
 struct LibsysInfo{
@@ -39,7 +42,7 @@ struct LibsysInfo{
 	int index_count;
 };
 
-// extern struct LIB_RepoInfo repo_handle;
+// extern struct LibsysInfo repo_handle;
 
 // libsys_create
 // Open the data file and index file in "wb" mode
@@ -56,19 +59,35 @@ int libsys_create( char *repo_name); // fopen, fclose
 int libsys_open( char *repo_name );
 
 // put_rec_by_key
+//-----check index file for key
+//-----if key already present check for flag 
+//-----if key is present but flag is RECORD_DELETED then just add entry at same index i.e update only offset and update flag; return status
+//-----if key is present but flag is RECORD_PRSENT return failure as data is already present
+//-----if key is not prsent then proceed with following steps:
+
 // Seek to the end of the data file
 // Create an index entry with the current data file location using ftell
 // Add index entry to array using offset returned by ftell
 // Write the key at the current data file location
 // Write the record after writing the key
+// return status
 int put_book_by_isbn( int key, struct Book *rec );
 
 // get_rec_by_key
+//check repo status
 // Search for index entry in index_entries array
+//-----use flag : RECORD_PRSENT to read valid entries
 // Seek to the file location based on offset in index entry
 // Read the key at the current file location 
 // Read the record after reading the key
 int get_book_by_isbn( int key, struct Book *rec );
+
+//-----delete_rec_by_key
+//-----check repo status
+//-----Search for index entry in index_entries array
+//-----if key matches and flag is RECORD_PRSENT then reset flag to RECORD_DELETED
+//-----if key matches but flag is RECORD_DELETED  return status LIB_REC_NOT_FOUND
+int delete_book_by_isbn( int key );
 
 // libsys_close
 // Open the index file in wb mode (write mode, not append mode)
@@ -76,5 +95,6 @@ int get_book_by_isbn( int key, struct Book *rec );
 // Unload the index array into the index file (overwrite the entire index file)
 // Close the index file and data file
 int libsys_close();
+
 
 #endif

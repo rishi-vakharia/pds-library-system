@@ -96,6 +96,53 @@ int main()
 		TREPORT(test_case_id,"FAIL")
 
 	test_case_id = "09";
+	status = delete_book_by_isbn( 10000 );
+	if( status == BOOK_SUCCESS )
+		TREPORT(test_case_id,"SUCCESS")
+	else
+		TREPORT(test_case_id,"FAIL")
+
+	test_case_id = "09";
+	status = delete_book_by_isbn( 10000 );
+	if( status == BOOK_SUCCESS )
+		TREPORT(test_case_id,"SUCCESS")
+	else
+		TREPORT(test_case_id,"FAIL")
+
+	testContact.isbn = 10000;
+	strcpy(testContact.title, "dummy name");
+	strcpy(testContact.author, "dummy author");
+
+	test_case_id = "10";
+	testContact.isbn = 10000;
+	status = put_book_by_isbn(testContact.isbn, &testContact );
+	if( status == BOOK_SUCCESS )
+		TREPORT(test_case_id,"SUCCESS")
+	else
+		TREPORT(test_case_id,"FAIL")
+
+
+	test_case_id = "11";
+	status = get_book_by_isbn( 10000, &testContact );
+	if( status == BOOK_SUCCESS )
+		TREPORT(test_case_id,"SUCCESS")
+	else
+		TREPORT(test_case_id,"FAIL")
+
+	test_case_id = "12";
+	if( testContact.isbn == 10000  && 
+		strcmp(testContact.title,"dummy name") == 0 &&
+		strcmp(testContact.author,"dummy author") == 0 )
+	{
+
+		TREPORT(test_case_id,"SUCCESS")
+	}
+	else
+		TREPORT(test_case_id,"FAIL")
+
+
+
+	test_case_id = "13";
 	status = libsys_close();
 	if( status == LIB_SUCCESS ){
 		TREPORT(test_case_id,"SUCCESS")
