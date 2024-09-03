@@ -85,6 +85,18 @@ The system includes robust error handling to manage various scenarios such as:
 
 A test driver (`libsys_tester.c`) is provided to verify the functionality of the system. It uses a set of predefined test cases to ensure all features work as expected.
 
+## Versions
+
+v1 - Basic implementation of a Library System - Read and Write Book records to a data file
+
+v2 - Persistent indexing for Book records - Faster Read Book record operation
+
+v3 - Delete Book record operation
+
+v4 - Library System with Two entities (Student, Book) - Issue Book functionality
+
+v5 - Menu Driven application for all the functionalities - Add, Delete, Issue, Search
+
 ## Future Enhancements
 
 Potential areas for future development include:
